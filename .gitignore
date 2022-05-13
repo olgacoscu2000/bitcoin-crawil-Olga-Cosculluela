@@ -2,3 +2,4 @@ Cargo.lock
 target/
 blocks.json
 file.txt
+transactions.json

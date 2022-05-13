@@ -97,3 +97,14 @@ pub fn store_version_message(target_address: &String, (_, _, _, _): (u32, Vec<u8
     // msg.push_str(format!("services = {:?}\n", services ).as_str());
     store_event(&msg);
 }
+pub fn store_transaction_message (transaction: &String){
+    store_event(&transaction);
+
+    let mut file = LineWriter::new(File::create("./transactions-found.json").unwrap());
+    file.write_all(b"[\n").unwrap();
+    file.write_all(transaction.as_bytes()).as_ref().unwrap();
+    file.write_all(b"]").unwrap();
+    drop(file);
+    fs::rename("./transactions-found.json", "./transactions.json").unwrap();
+
+}
