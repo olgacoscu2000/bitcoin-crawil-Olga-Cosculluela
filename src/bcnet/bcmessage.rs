@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 use hex::FromHex;
 use crate::bcblocks;
+use crate::bctransactions;
 use bitcoin_hashes::{sha256d, Hash};
 
 pub const VERSION:u32 = 70015;
@@ -68,6 +69,13 @@ lazy_static! {
     pub static ref GET_BLOCKS:String = String::from("getblocks");
     pub static ref GET_DATA:String = String::from("getdata");
     pub static ref BLOCK:String = String::from("block");
+    //Para las transacciones
+    //pub static ref TRANSACTION:String = String::from("tx");
+    //pub static ref PING:String = String::from("ping");//request for info about transactions
+   // pub static ref PONG:String = String::from("pong");//mirar nodos duplicados
+    //pub static ref BLOCK_CMPCT:String = String::from("cmpctblock");
+    pub static ref GET_BLOCK_TXN:String = String::from("getblocktxn");
+    pub static ref BLOCK_TXN:String = String::from("blocktxn");
 }
 
 const START_DATE:usize = 12;
@@ -85,6 +93,15 @@ const START_PAYLOAD_LENGTH :usize= 16;
 const END_PAYLOAD_LENGTH :usize= 20;
 const START_CHECKSUM:usize = 20;
 const END_CHECKSUM:usize = 24;
+
+//BLOCK STRUCT
+const START_VERSION:usize = 0;
+const END_VERSION:usize = 4;
+const START_PREV_BLOCK:usize = 4;
+const END_PREV_BLOCK:usize = 36;
+const TXN_COUNT :usize= 81;
+const START_TXNS :usize= 82;
+
 
 fn create_init_message_payload() -> Vec<u8> {
 
@@ -157,24 +174,40 @@ pub fn build_request(message : &str) -> Vec<u8>{
     let mut message_name = message;
     if message == MSG_VERSION.to_string() {
         payload_bytes = get_payload_with_current_date();
-        // eprintln!("->MSG_VERSION : {:02X?}", payload_bytes);
+       // eprintln!("->MSG_VERSION : {:02X?}", payload_bytes);
     // } else if message == GET_BLOCKS {
     //     payload_bytes = bcblocks::get_getblock_message_payload();
     } else if message == *GET_HEADERS {
         payload_bytes = bcblocks::get_getheaders_message_payload();
         //
-        // eprintln!("==> GET_HEADERS : {:02X?}", payload_bytes);
+        //eprintln!("==> GET_HEADERS : {:02X?}", payload_bytes);
         // std::process::exit(1);
-    } else if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
+    } else if message == *GET_DATA {
+        let mut block =  hex::encode(&bcblocks::get_getheaders_message_payload());
+        //String::from_utf8_lossy(&block);
+        
+        payload_bytes = bcblocks::get_getdata_message_payload(&block);
+        eprintln!("==> GET_DATA : {:02X?}", payload_bytes);
+        //std::process::exit(1);
+    
+   
+    } else if message == *GET_BLOCK_TXN {
+        payload_bytes = bctransactions::get_getblock_txn();
+        eprintln!("==> GET_BLOCKS_TXN : {:02X?}", payload_bytes);
+        std::process::exit(1);
+    }
+    
+    else if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
 
         payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()+1..]);
         message_name = &GET_DATA;
         println!("Build for getData : {}", message_name);
+        //std::process::exit(1);
 
         // eprintln!("Build for getData : {:02x?}", payload_bytes);
         // std::process::exit(1);
     }
-    // eprintln!("{} <-> {}", &message, &message_name);
+     eprintln!("{} <-> {}", &message, &message_name);
 
     let mut header :Vec<u8> = vec![0; HEADER_SIZE];
     build_request_message_header(& mut header, message_name, &payload_bytes);
@@ -186,11 +219,13 @@ pub fn build_request(message : &str) -> Vec<u8>{
     //     // std::process::exit(1);
     // }
 
+    //eprintln!("request: {:02X?}", request);
     return request;
 }
 
 fn get_payload_with_current_date() -> Vec<u8> {
     let mut payload :Vec<u8>  = TEMPLATE_MESSAGE_PAYLOAD.lock().unwrap().clone();
+    //eprintln!("primera template{:02X?}", payload);
     let mut date :Vec<u8> = Vec::new();
     let unix_timestamp:u64 = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
     date.extend(unix_timestamp.swap_bytes().to_be_bytes());
@@ -234,6 +269,21 @@ pub fn process_version_message(payload: &Vec<u8>) -> (u32, Vec<u8>, DateTime<Utc
         }
     }
     (version_number, services, peer_time, user_agent)
+}
+
+pub fn process_block_message(payload: &Vec<u8>) -> (u32, String, u8, String){
+    let version_number = u32::from_le_bytes((&payload[START_VERSION..END_VERSION]).try_into().unwrap());
+    let prev_block = String::from_utf8_lossy(&payload[START_PREV_BLOCK..END_PREV_BLOCK]).to_string();
+    let txn_count = (payload[TXN_COUNT]);
+    let txns = String::from_utf8_lossy(&payload[START_TXNS..]).to_string();
+
+    (version_number, prev_block, txn_count, txns)
+}
+
+pub fn process_transaction_message(payload: &Vec<u8>) -> String {
+    let mut trans = String::new();
+    trans.push_str(String::from_utf8(payload.to_vec()).unwrap().as_str() );
+    trans
 }
 
 pub fn process_addr_message(payload: &Vec<u8>) -> Vec<String>{
