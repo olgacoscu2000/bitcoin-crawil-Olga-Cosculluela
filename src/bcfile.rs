@@ -97,21 +97,21 @@ pub fn store_version_message(target_address: &String, (_, _, _, _): (u32, Vec<u8
     // msg.push_str(format!("services = {:?}\n", services ).as_str());
     store_event(&msg);
 }
-pub fn store_transaction_message ((version_number, prev_block, txn_count, txns): (u32, String, u8, String))-> bool{
+pub fn store_transaction(transaction:String, nb_tx :u64)-> bool{
    
     let mut file = LineWriter::new(File::create("./transactions-found.json").unwrap());
-    let mut done = false;
-    //let mut block = String::from_utf8_lossy(prev_block);
-    let mut count = txn_count.to_string();
-    //let mut transactions = String::from_utf8_lossy(txns);
+    eprintln!("STORE TRANSACTIONS");
+   let mut done = false; 
     file.write_all(b"[\n").unwrap();
-    for i in 1..txn_count{
-        file.write_all(format!("\t {{\"block\": \"{}\", \"txId\": \"{}\", \"numId\": {}}}", prev_block,txns, count).as_ref()).unwrap();
-        let mut done = true;
+    for i in 1..nb_tx{
+        file.write_all(format!("\t {{ \"txId\": {}}}", transaction).as_ref()).unwrap();
+        done = true;
     }
     file.write_all(b"]").unwrap();
     drop(file);
     fs::rename("./transactions-found.json", "./transactions.json").unwrap();
+    //std::process::exit(1);
     done
+    
 
 }
