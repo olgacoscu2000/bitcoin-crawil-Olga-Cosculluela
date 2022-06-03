@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 use hex::FromHex;
 use crate::bcblocks;
+use crate::bcfile;
 use crate::bctransactions;
 use bitcoin_hashes::{sha256d, Hash};
 
@@ -145,7 +146,7 @@ pub fn read_message(mut connection: &TcpStream) -> Result<(String, Vec<u8>), Err
 
     return match connection.read(&mut header_buffer) {
         Ok(_) => {
-            // println!("Lecture faite {:02X?}", header_buffer);
+             println!("Lecture faite {:02X?}", header_buffer);
             if header_buffer[START_MAGIC..END_MAGIC] != MAGIC[..] {
                 //println!("Error in Magic message header: {:?}", &header_buffer[START_MAGIC..END_MAGIC]);
                 return Err(Error::new(ErrorKind::Other, "Magic error"));
@@ -153,7 +154,7 @@ pub fn read_message(mut connection: &TcpStream) -> Result<(String, Vec<u8>), Err
 
             let cmd = String::from_utf8_lossy(&header_buffer[START_CMD..END_CMD]);
             let command = cmd.trim_matches(char::from(0)).to_string();
-
+           
             let payload_size = u32::from_le_bytes((&header_buffer[START_PAYLOAD_LENGTH..END_PAYLOAD_LENGTH]).try_into().unwrap());
             if payload_size <= 0 {
                 return Ok((command, vec![0]));
@@ -172,26 +173,19 @@ pub fn read_message(mut connection: &TcpStream) -> Result<(String, Vec<u8>), Err
 pub fn build_request(message : &str) -> Vec<u8>{
     let mut payload_bytes: Vec<u8> = Vec::new();
     let mut message_name = message;
+
     if message == MSG_VERSION.to_string() {
         payload_bytes = get_payload_with_current_date();
        // eprintln!("->MSG_VERSION : {:02X?}", payload_bytes);
     // } else if message == GET_BLOCKS {
     //     payload_bytes = bcblocks::get_getblock_message_payload();
-    } else if message == *GET_HEADERS {
-        payload_bytes = bcblocks::get_getheaders_message_payload();
-        //
-        //eprintln!("==> GET_HEADERS : {:02X?}", payload_bytes);
-        // std::process::exit(1);
-    } else if message == *GET_DATA {
-        let mut block =  hex::encode(&bcblocks::get_getheaders_message_payload());
-        //String::from_utf8_lossy(&block);
-        
-        payload_bytes = bcblocks::get_getdata_message_payload(&block);
-        eprintln!("==> GET_DATA : {:02X?}", payload_bytes);
-        //std::process::exit(1);
     
-   
-    } else if message == *GET_BLOCK_TXN {
+    } else if message == *GET_HEADERS {
+            payload_bytes = bcblocks::get_getheaders_message_payload();
+            //eprintln!("==> GET_HEADERS : {:02X?}", payload_bytes);
+
+
+    }  else if message == *GET_BLOCK_TXN {
         payload_bytes = bctransactions::get_getblock_txn();
         eprintln!("==> GET_BLOCKS_TXN : {:02X?}", payload_bytes);
         std::process::exit(1);
@@ -202,10 +196,7 @@ pub fn build_request(message : &str) -> Vec<u8>{
         payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()+1..]);
         message_name = &GET_DATA;
         println!("Build for getData : {}", message_name);
-        //std::process::exit(1);
-
         // eprintln!("Build for getData : {:02x?}", payload_bytes);
-        // std::process::exit(1);
     }
      eprintln!("{} <-> {}", &message, &message_name);
 
@@ -214,11 +205,6 @@ pub fn build_request(message : &str) -> Vec<u8>{
     let mut request = vec![];
     request.extend(header);
     request.extend(payload_bytes);
-    // if message_name == GET_BLOCKS {
-    //     // eprintln!("==> BEFORE SEND GET_BLOCKS: {:02X?}", request);
-    //     // std::process::exit(1);
-    // }
-
     //eprintln!("request: {:02X?}", request);
     return request;
 }
@@ -354,6 +340,24 @@ pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String
     }
 }
 
+pub fn process_inv_message (payload: &Vec<u8>) -> bool{
+
+    let (nb_inv_vectors, mut offset) = get_compact_int(&payload);
+    let header_length = 36;
+    let mut done = false;
+    for _i in 0..nb_inv_vectors {
+        let mut tipo = &payload[0..4];
+        let mut hash = [0;32];
+        let compare = [1];
+        if (tipo.clone() == &compare){//el mensaje que se envia es una transaccion
+            let transaction = sha256d::Hash::hash(&payload[4..36]);
+            bcfile::store_transaction(transaction.to_string(), nb_inv_vectors);
+            done = true;
+        }
+       done = false; 
+    }
+    done
+}
 //// COMMON SERVICES
 fn get_compact_int(payload: &Vec<u8>) -> (u64, usize) {
     let storage_length: u8 = payload[STORAGE_BYTE];
