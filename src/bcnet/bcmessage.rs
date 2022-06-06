@@ -185,7 +185,13 @@ pub fn build_request(message : &str) -> Vec<u8>{
             //eprintln!("==> GET_HEADERS : {:02X?}", payload_bytes);
 
 
-    }  else if message == *GET_BLOCK_TXN {
+    } else if message == *GET_BLOCKS {
+        payload_bytes = bcblocks::get_getblock_message_payload();
+        eprintln!("==> GET_BLOCKS : {:02X?}", payload_bytes);
+        
+
+
+    } else if message == *GET_BLOCK_TXN {
         payload_bytes = bctransactions::get_getblock_txn();
         eprintln!("==> GET_BLOCKS_TXN : {:02X?}", payload_bytes);
         std::process::exit(1);
@@ -353,8 +359,10 @@ pub fn process_inv_message (payload: &Vec<u8>) -> bool{
             let transaction = sha256d::Hash::hash(&payload[4..36]);
             bcfile::store_transaction(transaction.to_string(), nb_inv_vectors);
             done = true;
+            std::process::exit(1);
         }
        done = false; 
+       std::process::exit(1);
     }
     done
 }
