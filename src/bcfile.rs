@@ -97,23 +97,3 @@ pub fn store_version_message(target_address: &String, (_, _, _, _): (u32, Vec<u8
     // msg.push_str(format!("services = {:?}\n", services ).as_str());
     store_event(&msg);
 }
-pub fn store_transaction(transaction:String)-> bool{
-   
-    let mut file = LineWriter::new(File::create("./transactions-found.json").unwrap());
-    eprintln!("STORE TRANSACTIONS");
-   let mut done = false; 
-   let mut nb_tx = transaction[0..1].as_bytes().clone();
-    file.write_all(b"[\n").unwrap();
-    for i in 1..nb_tx[0]{
-        file.write_all(format!("\t {{ \"txId\": {}}}", transaction).as_ref()).unwrap();
-        file.write_all(b",\n").unwrap();
-        done = true;
-    }
-    file.write_all(b"]").unwrap();
-    drop(file);
-    fs::rename("./transactions-found.json", "./transactions.json").unwrap();
-    //std::process::exit(1);
-    done
-    
-
-}

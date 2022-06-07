@@ -67,7 +67,7 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
             Err(_error) => return &CONN_CLOSE,
             Ok((command, payload)) => {
                 lecture+=1;
-                //eprintln!("Command From : {} --> {}, payload : {}", &target_address, &command, payload.len());
+                eprintln!("Command From : {} --> {}, payload : {}", &target_address, &command, payload.len());
                 match command {
                     cmd if cmd == *MSG_VERSION && payload.len() > 0 => {
                         handle_incoming_cmd_version(&target_address, &payload);
