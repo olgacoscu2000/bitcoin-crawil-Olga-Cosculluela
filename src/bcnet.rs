@@ -173,7 +173,7 @@ fn activate_peer<'a>(mut connection: &TcpStream, current: &'a String, sender: &S
     match handle_incoming_message(connection, sender, target) {
         res if *res == *CONN_CLOSE => Err(Error::new(ErrorKind::Other, format!("Connexion terminée {} <> {}", current, res))),
         res if *res == *current => Ok(next_status(current)),
-        res if *res == *MSG_GETADDR && *current == *GET_HEADERS => Ok(current), // Remote node answers many times the same thing
+        res if *res == *MSG_GETADDR && *current == *GET_HEADERS && *current  == *GET_DATA=> Ok(current), // Remote node answers many times the same thing
         res => Err(Error::new(ErrorKind::ConnectionReset, format!("Wrong message {} <> {}", current, res)))
     }
 }
