@@ -202,6 +202,7 @@ pub fn build_request(message : &str) -> Vec<u8>{
         payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()+1..]);
         message_name = &GET_DATA;
         println!("Build for getData : {}", message_name);
+        std::process::exit(1);
         // eprintln!("Build for getData : {:02x?}", payload_bytes);
     }
      eprintln!("{} <-> {}", &message, &message_name);
@@ -263,13 +264,14 @@ pub fn process_version_message(payload: &Vec<u8>) -> (u32, Vec<u8>, DateTime<Utc
     (version_number, services, peer_time, user_agent)
 }
 
-pub fn process_block_message(payload: &Vec<u8>) -> (u32, String, u8, String){
+pub fn process_block_message(payload: &Vec<u8>) -> String{
     let version_number = u32::from_le_bytes((&payload[START_VERSION..END_VERSION]).try_into().unwrap());
     let prev_block = String::from_utf8_lossy(&payload[START_PREV_BLOCK..END_PREV_BLOCK]).to_string();
-    let txn_count = (payload[TXN_COUNT]);
-    let txns = String::from_utf8_lossy(&payload[START_TXNS..]).to_string();
+    let mut txn_count = (payload[TXN_COUNT]).to_string();
+    let mut txns = String::from_utf8_lossy(&payload[START_TXNS..]).to_string();
 
-    (version_number, prev_block, txn_count, txns)
+    txn_count.push_str(&txns);
+    txn_count
 }
 
 pub fn process_transaction_message(payload: &Vec<u8>) -> String {
@@ -352,17 +354,24 @@ pub fn process_inv_message (payload: &Vec<u8>) -> bool{
     let header_length = 36;
     let mut done = false;
     for _i in 0..nb_inv_vectors {
-        let mut tipo = &payload[0..4];
+        let mut tipo = &payload[1..5];//el 0 es el count
+        eprintln!("tipo {:?}", tipo);
         let mut hash = [0;32];
-        let compare = [1];
-        if (tipo.clone() == &compare){//el mensaje que se envia es una transaccion
-            let transaction = sha256d::Hash::hash(&payload[4..36]);
-            bcfile::store_transaction(transaction.to_string(), nb_inv_vectors);
+        let compareTx = [1,0,0,0];
+        let compareBck = [2,0,0,0];
+        if (tipo.clone() == &compareTx){//el mensaje que se envia es una transaccion
+            let transaction = sha256d::Hash::hash(&payload[5..37]);
+            bcfile::store_transaction(transaction.to_string());
             done = true;
-            std::process::exit(1);
+           // std::process::exit(1);
+        }
+        if (tipo.clone() == &compareBck){//el mensaje que se envia es una transaccion
+            eprintln!("It is a block, already saved with get_headers");
+            done = true;
+            //std::process::exit(1);
         }
        done = false; 
-       std::process::exit(1);
+      //std::process::exit(1);
     }
     done
 }
