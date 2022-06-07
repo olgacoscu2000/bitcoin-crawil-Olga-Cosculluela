@@ -162,7 +162,8 @@ fn next_status(from: &String) -> &String {
         elem if *elem == *MSG_VERSION => {&MSG_VERSION_ACK},
         elem if *elem == *MSG_VERSION_ACK => {&MSG_GETADDR},
         elem if *elem == *MSG_GETADDR => {&GET_HEADERS},
-        elem if *elem == *GET_HEADERS => {&GET_HEADERS},
+        elem if *elem == *GET_HEADERS => {&GET_DATA},
+        elem if *elem == *GET_DATA => {&GET_DATA},
         _ => {&CONN_CLOSE}
     }
 }
