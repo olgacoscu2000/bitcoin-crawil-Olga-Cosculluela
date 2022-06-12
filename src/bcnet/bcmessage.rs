@@ -166,26 +166,29 @@ pub fn build_request(message : &str) -> Vec<u8>{
         //
         // eprintln!("==> GET_HEADERS : {:02X?}", payload_bytes);
         // std::process::exit(1);
-    } else if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
 
-        payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()+1..]);
-        message_name = &GET_DATA;
-        println!("Build for getData : {}", message_name);
 
-        // eprintln!("Build for getData : {:02x?}", payload_bytes);
-        // std::process::exit(1);
+    } else if message == *GET_DATA{
+        
+    
+    
+        if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
+            
+            payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()+1..]);
+            message_name = &GET_DATA;
+            println!("Build for getData : {}", message_name);
+
+            // eprintln!("Build for getData : {:02x?}", payload_bytes);
+            // std::process::exit(1);
+        }
     }
-    // eprintln!("{} <-> {}", &message, &message_name);
 
     let mut header :Vec<u8> = vec![0; HEADER_SIZE];
     build_request_message_header(& mut header, message_name, &payload_bytes);
     let mut request = vec![];
     request.extend(header);
     request.extend(payload_bytes);
-    // if message_name == GET_BLOCKS {
-    //     // eprintln!("==> BEFORE SEND GET_BLOCKS: {:02X?}", request);
-    //     // std::process::exit(1);
-    // }
+   
 
     return request;
 }
@@ -280,7 +283,6 @@ pub enum ProcessHeadersMessageError {
 pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String, bcblocks::BlockDesc>>,blocks_id_guard: &mut MutexGuard<Vec<(String, bool)>>, payload: &Vec<u8>) -> Result<(), ProcessHeadersMessageError> {
 
     let mut highest_index = 0;
-
     let (nb_headers, mut offset) = get_compact_int(&payload);
     let header_length = 80;
     for _i in 0..nb_headers {
