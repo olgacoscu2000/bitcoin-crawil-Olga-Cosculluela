@@ -260,5 +260,6 @@ fn handle_incoming_cmd_msg_header(payload: &Vec<u8>, lecture: &mut usize) -> boo
 
 fn handle_incoming_cmd_block(payload: &Vec<u8>){
     eprintln!("handle block");
-    std::process::exit(1);
+    bcmessage::process_block_message(payload);
+    //std::process::exit(1);
  }
