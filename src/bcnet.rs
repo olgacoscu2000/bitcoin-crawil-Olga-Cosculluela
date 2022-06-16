@@ -6,6 +6,7 @@ use std::sync::atomic::Ordering;
 use std::io::Write;
 use std::io::Error;
 use std::io::ErrorKind;
+use std::str::from_utf8;
 
 use std::net::{SocketAddr, TcpStream};
 use chan::Receiver;
@@ -68,6 +69,7 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
             Ok((command, payload)) => {
                 lecture+=1;
                 eprintln!("Command From : {} --> {}, payload : {}", &target_address, &command, payload.len());
+              
                 match command {
                     cmd if cmd == *MSG_VERSION && payload.len() > 0 => {
                         handle_incoming_cmd_version(&target_address, &payload);
@@ -82,6 +84,14 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
                             true  => &GET_HEADERS,
                             false => &CONN_CLOSE
                         },
+                    cmd if cmd == *BLOCK
+                    => {
+                        std::process::exit(1);
+                        return &MSG_VERSION_ACK
+                    
+                    },  
+                    
+                    
                     _ => {}
                 };
                 //
@@ -92,18 +102,38 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
                 // // }
                 //
 
-                // if command == String::from(INV){
+                // if command == "inv"{
+                //     eprintln!("ha salido en el inv");
+                    
                 //     //TODO: must migrate to bcmessage::process_inv_message
                 //     //TODO: check inv_size -> get_compact_int
-                //
+                
                 //     let inv_size = payload[0];
                 //     let inv_length = 36;
                 //     let block_length = 32;
                 //     let mut offset = 0;
                 //     for _i in 0..inv_size {
+                //         //eprintln!("offset del inv {:?}",(&payload[0..5]));
+                //        // eprintln!("offset del inv {:?}",hex::encode(&payload[0..5]));
+                //         // eprintln!("offset del inv {:?}", hex::encode(&payload[5..5+block_length]));
+                //         // std::process::exit(1);
+                //         if payload[offset+1] == 0x01 {
+                //             eprintln!("payload inv {:?}", (&payload[0..]));
+                //             let msg = format!("{}{:?}", "getdata", &payload[0..block_length]);
+                //             eprintln!(" block {:}", msg);
+                //             std::process::exit(1);
+
+                            
+                //             bcmessage::build_request(&msg);
+                //         }
+
+
                 //         if payload[offset+1] == 0x02 {
+                //             println!("offset del inv {:?}",(&payload[0..block_length]));
+                //              eprintln!("offset del inv {:?}", hex::encode(&payload[0..block_length]));
+                            
                 //             let mut toto:[u8; 32] = [0x00; 32] ;
-                //             // eprint!("BLOCK ==> ");
+                //             eprint!("BLOCK ==> ");
                 //             for val in 0..block_length {
                 //                 toto[val] = payload[offset+inv_length-val];
                 //             }
@@ -112,18 +142,22 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
                 //                 // std::process::exit(1);
                 //             } else {
                 //                 let block_name = hex::encode(&toto);
-                //                 if bcblocks::is_new(block_name.clone()) {
-                //
-                //                     let get_data = format_args!("{msg}/{block}", msg=GET_DATA, block=block_name).to_string();
-                //                     eprintln!("Recherche du block {}", get_data);
-                //
-                //                     match in_chain.send(get_data) {
-                //                         Err(error) => {
-                //                             eprintln!("Erreur Send chan : {} ip : {}", error, &target_address);
-                //                         }
-                //                         _ => {}
-                //                     }
-                //                 }
+                //                 let get_data = format_args!("{msg}/{block}", msg=*GET_DATA, block=block_name).to_string();
+                //                 eprintln!("Recherche du block {}", get_data);
+                //                 std::process::exit(1);
+
+                //                 // if bcblocks::is_new(block_name.clone()) {
+                
+                //                 //     let get_data = format_args!("{msg}/{block}", msg=GET_DATA, block=block_name).to_string();
+                //                 //     eprintln!("Recherche du block {}", get_data);
+                //                 //     std::process::exit(1);
+                //                 //     // match in_chain.send(get_data) {
+                //                 //     //     Err(error) => {
+                //                 //     //         eprintln!("Erreur Send chan : {} ip : {}", error, &target_address);
+                //                 //     //     }
+                //                 //     //     _ => {}
+                //                 //    // }
+                //                 // }
                 //             }
                 //         }
                 //         offset+=inv_length;
