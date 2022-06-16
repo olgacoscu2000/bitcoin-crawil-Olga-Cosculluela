@@ -307,6 +307,12 @@ pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String
     }
 }
 
+pub fn process_block_message(payload: &Vec<u8>){
+    eprintln!("process block");
+    std::process::exit(1);
+}
+
+
 //// COMMON SERVICES
 fn get_compact_int(payload: &Vec<u8>) -> (u64, usize) {
     let storage_length: u8 = payload[STORAGE_BYTE];
