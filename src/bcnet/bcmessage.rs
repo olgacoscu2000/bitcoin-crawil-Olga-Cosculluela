@@ -309,6 +309,9 @@ pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String
 
 pub fn process_block_message(payload: &Vec<u8>){
     eprintln!("process block");
+    let mut block_length = 81; 
+    let mut txn_count = &payload[80]; 
+    eprintln!("txn_count {}", txn_count);
     std::process::exit(1);
 }
 
