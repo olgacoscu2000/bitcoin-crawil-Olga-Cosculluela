@@ -170,18 +170,47 @@ pub fn build_request(message : &str) -> Vec<u8>{
 
     } else if message == *GET_DATA{
         
-    
-    
+       let message = &(message.to_owned()+ "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+       eprintln!("message getdata : {}", message);
         if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
-            
-            payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()+1..]);
+            // eprintln!("message getdara : {}", &message[GET_DATA.len()+1..].to_string());
+            // let mut block = Vec::from_hex(&message[GET_DATA.len()..]);
+            // let mut block2 = Vec::from_hex("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+            // eprintln!("message getdara  after : {:02X?}", block2);
+            // eprintln!("message getdara  after : {:02X?}", block);
+            // std::process::exit(1);
+            payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()..]);
             message_name = &GET_DATA;
             println!("Build for getData : {}", message_name);
 
             // eprintln!("Build for getData : {:02x?}", payload_bytes);
-            // std::process::exit(1);
+            //std::process::exit(1);
         }
     }
+
+
+    // } else if message == *GET_DATA{
+    //     let mut blocks_id_guard = bcblocks::BLOCKS_ID.lock().unwrap();
+    //     let block = &(message.to_owned()+ "7f110100012c248d014a80621f4e534d02154e0daa74a25931b1431673d111e072000000000000000000000000000000000000000000000000000000000000000000000000");
+    //     let data_name = block;
+    //     println!("get data : {}", data_name);
+    //    //std::process::exit(1);
+       
+    //     if data_name.len() > GET_DATA.len() && &data_name[..GET_DATA.len()] == *GET_DATA {
+    //         payload_bytes = bcblocks::get_getdata_message_payload(&data_name[GET_DATA.len()+1..]);
+    //         message_name = &GET_DATA;
+    //         println!("Build for getData : {}", message_name);
+
+    //         // eprintln!("Build for getData : {:02x?}", payload_bytes);
+    //         std::process::exit(1);
+    //     }
+    // }
+    // eprintln!("{} <-> {}", &message, &message_name);
+
+    // if message_name == "getdata" {
+    //     eprintln!("==> REQUEST GETDATA: {:02X?}", payload_bytes);
+    //     std::process::exit(1);
+    // }
 
     let mut header :Vec<u8> = vec![0; HEADER_SIZE];
     build_request_message_header(& mut header, message_name, &payload_bytes);
@@ -290,7 +319,7 @@ pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String
         previous_block.clone_from_slice(&payload[offset+4..offset+4+32]);
         previous_block.reverse();
         let current_block = sha256d::Hash::hash(&payload[offset..offset+header_length]);
-        // eprintln!("Gen -> {} --> {}", hex::encode(previous_block), current_block.to_string());
+       // eprintln!("Gen -> {} --> {}", hex::encode(previous_block), current_block.to_string());
         match bcblocks::is_new(known_block_guard, blocks_id_guard, current_block.to_string(), hex::encode(previous_block)) {
             Ok(idx) if idx > highest_index => {
                 highest_index = idx;
