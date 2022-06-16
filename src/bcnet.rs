@@ -86,7 +86,7 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
                         },
                     cmd if cmd == *BLOCK
                     => {
-                        std::process::exit(1);
+                        handle_incoming_cmd_block(&payload);
                         return &MSG_VERSION_ACK
                     
                     },  
@@ -257,3 +257,8 @@ fn handle_incoming_cmd_msg_header(payload: &Vec<u8>, lecture: &mut usize) -> boo
         }
     }
 }
+
+fn handle_incoming_cmd_block(payload: &Vec<u8>){
+    eprintln!("handle block");
+    std::process::exit(1);
+ }
