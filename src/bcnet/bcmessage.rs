@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 use hex::FromHex;
 use crate::bcblocks;
+use crate::bcfile;
 use bitcoin_hashes::{sha256d, Hash};
 
 pub const VERSION:u32 = 70015;
@@ -310,8 +311,26 @@ pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String
 pub fn process_block_message(payload: &Vec<u8>){
     eprintln!("process block");
     let mut block_length = 81; 
-    let mut txn_count = &payload[80]; 
-    eprintln!("txn_count {}", txn_count);
+    let mut txn_count = payload[80]; 
+    eprintln!("payload tx {:02X?}", &payload[81..]);
+    eprintln!("payload tx {:02X?}", &payload[81..143]);
+    let mut transactions = Vec::new(); 
+    let mut offset = 80;
+    for i in 0..txn_count{
+        //let mut offset =i*64 + 81;
+        let mut begin = 1+offset;
+        let mut end = begin + 204;
+        eprintln!("begin end {} {}", begin, end);
+        let mut txn = sha256d::Hash::hash(&payload[begin..end]);
+        eprintln!("payload tx hash {:02X?}",sha256d::Hash::hash(&payload[begin..end]));
+        transactions.push(txn.to_string());
+        offset = offset + 64
+    }
+    
+    bcfile::store_transaction(&transactions,txn_count); 
+    eprintln!("payload tx hash {:02X?}",sha256d::Hash::hash(&payload[81..]));
+
+    
     std::process::exit(1);
 }
 
