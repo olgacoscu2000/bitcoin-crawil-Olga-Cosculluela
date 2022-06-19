@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 use std::sync::Mutex;
 use crate::bcblocks;
 use chrono::{DateTime, Utc};
+use bitcoin_hashes::{sha256d, Hash};
 
 lazy_static! {
     pub static ref LOGGER: Mutex<LineWriter<Box<dyn Write + Send>>> = Mutex::new(LineWriter::new(Box::new(stdout())));
@@ -64,6 +65,38 @@ pub fn store_blocks(blocks: &Vec<(String, bool)>) -> bool {
     drop(file);
     fs::rename("./blocks-found.json", "./blocks.json").unwrap();
     new_blocks
+}
+
+pub fn store_transaction(transactions:&Vec<(String)>, txn_count:u8)-> bool{
+   
+    let mut file = LineWriter::new(File::create("./transactions-found.json").unwrap());
+    eprintln!("STORE TRANSACTIONS");
+   let mut done = false; 
+   //let mut nb_tx = transaction[0..1].as_bytes().clone();
+   //eprintln!("n< tx: {:?}", txn_count);
+   //eprintln!("n< tx: {:?}", nb_tx[0]);
+   //let tx_length = 64;
+   
+    file.write_all(b"[\n").unwrap();
+    for i in 0..transactions.len(){
+        let tx = &transactions[i];
+        file.write_all(format!("\t {{ \"txId\": {:?}}}", tx).as_ref()).unwrap();
+        if i < transactions.len()-1 {
+            file.write_all(b",\n").unwrap();
+           } else {
+            file.write_all(b"\n").unwrap();
+           }
+
+        done = true;
+        
+    }
+    file.write_all(b"]").unwrap();
+    drop(file);
+    fs::rename("./transactions-found.json", "./transactions.json").unwrap();
+    //std::process::exit(1);
+    done
+    
+
 }
 
 /// Addr storage
