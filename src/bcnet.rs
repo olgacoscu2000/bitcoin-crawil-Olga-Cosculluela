@@ -85,11 +85,9 @@ fn handle_incoming_message<'a>(connection:& TcpStream, sender: &Sender<String>, 
                             false => &CONN_CLOSE
                         },
                     cmd if cmd == *BLOCK
-                    => {
-                        handle_incoming_cmd_block(&payload);
-                        return &GET_DATA
-                    
-                    },  
+                        => {handle_incoming_cmd_block(&payload);
+                            return &GET_DATA
+                            },  
                     
                     
                     _ => {}
