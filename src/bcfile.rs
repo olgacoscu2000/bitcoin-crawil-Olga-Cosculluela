@@ -33,7 +33,7 @@ pub fn load_blocks() {
     let mut previous: String = "".to_string();
     for item in blocks {
         // eprintln!("-> {}", item.elem);
-        blocks_id.push((item.elem.clone(), item.next));
+        blocks_id.push((item.elem.clone(), item.next, false));
         known_block.insert(item.elem.clone(), bcblocks::BlockDesc{idx, previous});
         if item.next {
             previous = item.elem;
@@ -45,13 +45,13 @@ pub fn load_blocks() {
     eprintln!("Fin lecture fichier blocks");
 }
 
-pub fn store_blocks(blocks: &Vec<(String, bool)>) -> bool {
+pub fn store_blocks(blocks: &Vec<(String, bool, bool)>) -> bool {
     let mut file = LineWriter::new(File::create("./blocks-found.json").unwrap());
     let mut new_blocks = false;
     file.write_all(b"[\n").unwrap();
     for i in 1..blocks.len() {
-        let (block, next) = &blocks[i];
-        file.write_all(format!("\t {{\"elem\": \"{}\", \"next\": {}}}", block, next).as_ref()).unwrap();
+        let (block, next, downloaded) = &blocks[i];
+        file.write_all(format!("\t {{\"elem\": \"{}\", \"next\": {} , , \"downloaded\": {} }}", block, next, downloaded).as_ref()).unwrap();
         if i < blocks.len()-1 {
          file.write_all(b",\n").unwrap();
         } else {
@@ -72,11 +72,6 @@ pub fn store_transaction(transactions:&Vec<(String)>, txn_count:u8)-> bool{
     let mut file = LineWriter::new(File::create("./transactions-found.json").unwrap());
     eprintln!("STORE TRANSACTIONS");
    let mut done = false; 
-   //let mut nb_tx = transaction[0..1].as_bytes().clone();
-   //eprintln!("n< tx: {:?}", txn_count);
-   //eprintln!("n< tx: {:?}", nb_tx[0]);
-   //let tx_length = 64;
-   
     file.write_all(b"[\n").unwrap();
     for i in 0..transactions.len(){
         let tx = &transactions[i];
@@ -86,17 +81,13 @@ pub fn store_transaction(transactions:&Vec<(String)>, txn_count:u8)-> bool{
            } else {
             file.write_all(b"\n").unwrap();
            }
-
         done = true;
-        
     }
     file.write_all(b"]").unwrap();
     drop(file);
     fs::rename("./transactions-found.json", "./transactions.json").unwrap();
     //std::process::exit(1);
     done
-    
-
 }
 
 /// Addr storage
