@@ -51,7 +51,7 @@ pub fn store_blocks(blocks: &Vec<(String, bool, bool)>) -> bool {
     file.write_all(b"[\n").unwrap();
     for i in 1..blocks.len() {
         let (block, next, downloaded) = &blocks[i];
-        file.write_all(format!("\t {{\"elem\": \"{}\", \"next\": {} , , \"downloaded\": {} }}", block, next, downloaded).as_ref()).unwrap();
+        file.write_all(format!("\t {{\"elem\": \"{}\", \"next\": {} , \"downloaded\": {}}}", block, next, downloaded).as_ref()).unwrap();
         if i < blocks.len()-1 {
          file.write_all(b",\n").unwrap();
         } else {
