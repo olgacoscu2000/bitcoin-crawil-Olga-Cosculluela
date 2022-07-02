@@ -178,11 +178,24 @@ pub fn build_request(message : &str) -> Vec<u8>{
             payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()..]);
             message_name = &GET_DATA;
             //println!("Build for getData : {}", message_name);
-
             // eprintln!("Build for getData : {:02x?}", payload_bytes);
             //std::process::exit(1);
         }
     }
+
+    // for i in 0..blocks_id_guard.len(){
+    //     let message = &(message.to_owned()+ &blocks_id_guard[i].0);
+    //    // println!("get data : {}", message);
+    //         if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
+    //             payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()..]);
+    //             message_name = &GET_DATA;
+    //             //println!("Build for getData : {}", message_name);
+
+    //             // eprintln!("Build for getData : {:02x?}", payload_bytes);
+    //             //std::process::exit(1);
+    //         }
+
+    //     }
 
     let mut header :Vec<u8> = vec![0; HEADER_SIZE];
     build_request_message_header(& mut header, message_name, &payload_bytes);
@@ -281,7 +294,7 @@ pub enum ProcessHeadersMessageError {
     UnkownBlocks,
     NoNewBlocks
 }
-pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String, bcblocks::BlockDesc>>,blocks_id_guard: &mut MutexGuard<Vec<(String, bool)>>, payload: &Vec<u8>) -> Result<(), ProcessHeadersMessageError> {
+pub fn process_headers_message(known_block_guard: &mut MutexGuard<HashMap<String, bcblocks::BlockDesc>>,blocks_id_guard: &mut MutexGuard<Vec<(String, bool, bool)>>, payload: &Vec<u8>) -> Result<(), ProcessHeadersMessageError> {
 
     let mut highest_index = 0;
     let (nb_headers, mut offset) = get_compact_int(&payload);
