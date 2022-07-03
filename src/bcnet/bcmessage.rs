@@ -172,15 +172,21 @@ pub fn build_request(message : &str) -> Vec<u8>{
     } else if message == *GET_DATA{
 
         let mut blocks_id_guard = bcblocks::BLOCKS_ID.lock().unwrap();
-        let message = &(message.to_owned()+ &blocks_id_guard[1].0);
-       // println!("get data : {}", message);
-        if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
-            payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()..]);
-            message_name = &GET_DATA;
-            //println!("Build for getData : {}", message_name);
-            // eprintln!("Build for getData : {:02x?}", payload_bytes);
-            //std::process::exit(1);
-        }
+        for i in 0..blocks_id_guard.len(){
+
+            if blocks_id_guard[i].2 == false{
+                let message = &(message.to_owned()+ &blocks_id_guard[i].0);
+            // println!("get data : {}", message);
+                if message.len() > GET_DATA.len() && &message[..GET_DATA.len()] == *GET_DATA {
+                    payload_bytes = bcblocks::get_getdata_message_payload(&message[GET_DATA.len()..]);
+                    message_name = &GET_DATA;
+                    blocks_id_guard[i].2 = true;
+                    //println!("Build for getData : {}", message_name);
+                    // eprintln!("Build for getData : {:02x?}", payload_bytes);
+                    //std::process::exit(1);
+                }
+            }   
+        }    
     }
 
     // for i in 0..blocks_id_guard.len(){
@@ -329,22 +335,26 @@ pub fn process_block_message(payload: &Vec<u8>){
     eprintln!("payload tx {:02X?}", &payload[81..143]);
     let mut transactions = Vec::new(); 
     let mut offset = 80;
-    for i in 0..txn_count{
-        //let mut offset =i*64 + 81;
-        let mut begin = 1+offset;
-        let mut end = begin + 204;
-        eprintln!("begin end {} {}", begin, end);
-        let mut txn = sha256d::Hash::hash(&payload[begin..end]);
-        eprintln!("payload tx hash {:02X?}",sha256d::Hash::hash(&payload[begin..end]));
-        transactions.push(txn.to_string());
-        offset = offset + 64
-    }
-    
+    let mut txn = sha256d::Hash::hash(&payload[81..]);
+    transactions.push(txn.to_string());
     bcfile::store_transaction(&transactions,txn_count); 
-    eprintln!("payload tx hash {:02X?}",sha256d::Hash::hash(&payload[81..]));
+    // for i in 0..txn_count{
+    //     //let mut offset =i*64 + 81;
+    //     let mut begin = 1+offset;
+    //     let mut end = begin + 204;
+    //     eprintln!("begin end {} {}", begin, end);
+    //     let mut txn = sha256d::Hash::hash(&payload[81..]);
+    //     //eprintln!("payload tx hash {:02X?}",sha256d::Hash::hash(&payload[begin..end]));
+    //     transactions.push(txn.to_string());
+    //     offset = offset + 64;
+    //     bcfile::store_transaction(&transactions,txn_count); 
+    // }
+    
+    // bcfile::store_transaction(&transactions,txn_count); 
+    // eprintln!("payload tx hash {:02X?}",sha256d::Hash::hash(&payload[81..]));
 
     
-    std::process::exit(1);
+    //std::process::exit(1);
 }
 
 
